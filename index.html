@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pacman</title>
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing: border-box;
+        }
+        body{
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background-color: black;
+        }
+        .container{
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%,-50%);
+        }
+        .world{
+            width: 50px;
+            height: 50px;
+            background-color: white;
+        }
+        #pacman{
+            background: url(/assets/pacman.gif) center center no-repeat;
+            width: 20px;
+            height: 20px;
+            background-size: cover;
+            position: absolute;
+            /* top:20px;
+            left: 20px; */
+        }
+        #world .row div{
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+        }
+
+        #world .wall{
+            background:blue;
+        }
+        #world .coin{
+            background: url(/assets/coins.gif) center center no-repeat;
+            background-size: cover;
+        }
+        #world .row{
+            height: 20px;
+        }
+        #world .empty{
+
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="world">
+            <!-- <div class="row">
+                <div class="coin"></div>
+            </div> -->
+            
+        </div>
+        <div id="pacman">
+
+        </div>
+    </div>
+    
+    <script>
+
+        var gameInterval;
+
+        var pacman = {
+            x: 20,
+            y: 20,
+            el: document.getElementById("pacman"),
+            direction:"right",
+            nextDirection:"right",
+            speed: 1,
+            willTurn:false,
+            updateElPacman:function(){
+                this.el.style.left = pacman.x+"px";
+                this.el.style.top = pacman.y+"px";
+            },
+
+        };
+
+        var mainWorld = {
+            elSize:20,
+            worlds:
+            [
+                [
+                    [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+                    [2,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+                    [2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+                    [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+                    [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+                 ],
+                 [
+                    [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+                    [2,0,1,1,2,2,2,2,1,1,1,1,1,1,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+                    [2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+                    [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+                    [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+                 ],
+                 [
+                    [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+                    [2,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+                    [2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+                    [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+                    [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+                 ],
+                 [
+                    [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+                    [2,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+                    [2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+                    [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+                    [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+                 ],
+                 [
+                    [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+                    [2,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+                    [2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2],
+                    [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+                    [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+                    [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+                 ]
+            ],
+            createWorld: function(){
+                var output = "";
+                for(var i = 0; i < this.worlds[0].length; i++){
+                    output += "\n<div class='row'>\n";
+                        for(var j = 0; j <this.worlds[1][i].length; j++){
+                            if(this.worlds[0][i][j] == 2){
+                                output += this.createEl("wall")
+                            }else if(this.worlds[0][i][j] == 1){
+                                output += this.createEl("coin")
+                            }else{
+                                output += this.createEl("empty")
+                            }
+                        }
+                    output += "\n</div>"
+                }
+                document.getElementById("world").innerHTML = output;
+            },
+            createEl: function(string){
+                return `<div class="${string}"></div>`;
+            }
+        }
+
+        var elSizes = 20;
+
+        document.onkeydown = function(e){
+            e.preventDefault();
+            if(e.keyCode == 37){
+                pacman.nextDirection = "left";
+                pacman.willTurn = true;
+            }else if(e.keyCode == 38){
+                pacman.nextDirection = "up";
+                pacman.willTurn = true;
+            }else if(e.keyCode == 39){
+                pacman.nextDirection = "right";
+                pacman.willTurn = true;
+            }else if(e.keyCode == 40){
+                pacman.nextDirection = "down";
+                pacman.willTurn = true;
+            }
+        }
+
+        function collissionDetection(obj1,obj2){
+
+        }
+     
+       function movePacman(){
+           console.log(pacman.x);
+
+
+           if(pacman.x%mainWorld.elSize==0 && pacman.y%mainWorld.elSize==0  && pacman.willTurn) {
+               willTurn = false;
+               pacman.direction = pacman.nextDirection;
+           }
+           
+           
+           if(pacman.direction == "left"){
+                pacman.x -= pacman.speed;
+            }else if(pacman.direction == "right"){
+                pacman.x += pacman.speed;
+            }else if(pacman.direction == "down"){
+                pacman.y += pacman.speed;
+            }else if(pacman.direction == "up"){
+                pacman.y -= pacman.speed;
+            }
+       }
+
+       function getAllGameElementsCoords(){
+
+       }
+        
+       
+       function update(){
+            movePacman();
+            pacman.updateElPacman();
+       }
+        
+
+        function main(){
+            gameInterval = setInterval(function(){
+               
+              update();
+                
+            },20)
+        }
+        mainWorld.createWorld();
+        main();
+    </script>
+</body>
+</html>
